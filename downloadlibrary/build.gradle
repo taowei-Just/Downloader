@@ -52,5 +52,6 @@ dependencies {
     implementation group: 'com.squareup.okio', name: 'okio', version: '1.15.0'
     implementation 'com.google.code.gson:gson:2.2.4'
     implementation 'com.github.taowei-Just:SqlOrm:v1.3'
-    implementation 'com.github.taowei-Just:UtilsLib:1.7'
+    implementation(name: 'utils-1.8', ext: 'aar')
+
 }
