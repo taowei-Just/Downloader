@@ -53,7 +53,7 @@ public class DownloadWraper {
     public boolean checkLocal(DownloadInfo downloadInfo) {
         File file = new File(downloadInfo.filePath);
         try {
-            if (file.exists() && !TextUtils.isEmpty(downloadInfo.getMd5()) && (downloadInfo.getMd5().equals(MD5Util.md5FromFile(downloadInfo.filePath, false)))) {
+            if (file.exists() && !TextUtils.isEmpty(downloadInfo.getMd5()) && (downloadInfo.getMd5().equals(MD5Util.getMD5fromBigFile(new File(downloadInfo.filePath))))) {
                 return true;
             }
         } catch (Exception e) {

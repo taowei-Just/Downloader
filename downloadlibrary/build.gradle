@@ -16,6 +16,22 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
+
+        def projectname = "downloadlib"
+//        libraryVariants.all { variant ->
+//            variant.outputs.all {
+//
+//                if (variant.buildType.name.equals('release')) {
+//                    def fileName =   new File("../release/",  projectname+"-"+defaultConfig.versionName+".aar")
+//                    outputFileName = fileName
+//          
+//                } else if (variant.buildType.name.equals('debug')) {
+//                    def fileName =  new File("../debug/", projectname+"-debug.aar")
+//                    outputFileName = fileName
+//               
+//                }
+//            }
+//        }
     }
     repositories {
         flatDir {
@@ -31,11 +47,10 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
-
     implementation 'com.squareup.okhttp3:okhttp:3.8.1'
     // https://mvnrepository.com/artifact/com.squareup.okio/okio
     implementation group: 'com.squareup.okio', name: 'okio', version: '1.15.0'
     implementation 'com.google.code.gson:gson:2.2.4'
     implementation 'com.github.taowei-Just:SqlOrm:v1.3'
-    implementation 'com.github.taowei-Just:UtilsLib:1.5'
+    implementation 'com.github.taowei-Just:UtilsLib:1.7'
 }
