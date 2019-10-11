@@ -1,5 +1,7 @@
 package tao.com.downloadlibrary.downLoad;
 
+import tao.com.downloadlibrary.TaskInfo;
+
 public interface DownloadCall {
 
     void onStart(DownloadInfo downLoadInfo);
@@ -7,6 +9,8 @@ public interface DownloadCall {
     void onStop(DownloadInfo downLoadInfo);
 
     void onProgress(DownloadInfo downLoadInfo);
+    
+    void onThreadProgress(DownloadInfo downLoadInfo , TaskInfo taskInfo);
 
     void onError(DownloadInfo downLoadInfo);
 

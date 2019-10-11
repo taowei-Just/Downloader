@@ -5,6 +5,7 @@ import android.util.Log;
 
 import com.tao.utilslib.data.MD5Util;
 import com.tao.utilslib.file.FileUtil;
+import com.tao.utilslib.log.LogUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -103,7 +104,7 @@ public class DownloadWraper {
         downloadHelper.httpClient.newCall(new Request.Builder().url(downloadInfo.getUrl()).get().build()).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-//                Log.e(tag, "netInfo onFailure : " + e.toString());
+                Log.e(tag, "netInfo onFailure : " + e.toString());
                 downloadHelper.downloadPartner.CallError(downloadInfo);
             }
 
@@ -113,7 +114,7 @@ public class DownloadWraper {
                 downloadInfo.setFileLen(length);
                 downloadInfo.setDownloadId(downloadHelper.getDownloadId());
                 Headers headers = response.headers();
-
+                LogUtil.e(tag , " headers " + headers.toString());
                 if (rangS(headers, "Content-disposition")) {
                     List<String> values = headers.values("Content-disposition");
                     for (String s : values) {
@@ -185,9 +186,7 @@ public class DownloadWraper {
             DownloadTask task = new DownloadTask(downloadHelper, downloadInfo, info, taskCall);
             Future<?> submit = downloadHelper.poolExecutor.submit(task);
             downloadHelper.downloadPartner.updataTask(info, submit);
-
         }
-
     }
 
     public boolean checkTask(DownloadInfo downloadInfo, List<TaskInfo> pool) {

@@ -1,12 +1,9 @@
 package tao.com.downloadlibrary.downLoad;
 
 
-import android.nfc.Tag;
 import android.util.Log;
-
 import com.tao.utilslib.data.MD5Util;
 import com.tao.utilslib.list.MapUtil;
-
 import java.io.File;
 import java.util.HashMap;
 import java.util.List;
@@ -38,14 +35,19 @@ public class DownloadPartner implements DownloadTaskCAll {
     public List<TaskInfo> findPoolInfo(final DownloadInfo info) {
         if (info ==null)
             return null ;
-        List<TaskInfo> taskInfos = (List<TaskInfo>) MapUtil.iteratorMap(downloadTaskMap, new MapUtil.IteratorCall<List<TaskInfo>>() {
-            @Override
-            public MapUtil.IteratorType onIterator(Object key, List<TaskInfo> value) {
-                if (info ==key || info.getUrl().equals(((DownloadInfo) key).getUrl()))
-                    return MapUtil.IteratorType.ret;
-                return MapUtil.IteratorType.next;
-            }
-        });
+        List<TaskInfo> taskInfos = null;
+        try {
+            taskInfos = (List<TaskInfo>) MapUtil.iteratorMap(downloadTaskMap, new MapUtil.IteratorCall<DownloadInfo,List<TaskInfo>>() {
+                @Override
+                public MapUtil.IteratorType onIterator(DownloadInfo key, List<TaskInfo> value) {
+                    if (info ==key || info.getUrl().equals(((DownloadInfo) key).getUrl()))
+                        return MapUtil.IteratorType.ret;
+                    return MapUtil.IteratorType.next;
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         return taskInfos;
     }
@@ -57,7 +59,7 @@ public class DownloadPartner implements DownloadTaskCAll {
     }
 
     public void updataTask(TaskInfo info, Future<?> submit) {
-        Log.e(Tag ,"updataTask " +info.getUrl());
+//        Log.e(Tag ,"updataTask " +info.getUrl());
         taskMap.put(info, submit);
     }
 
@@ -65,22 +67,29 @@ public class DownloadPartner implements DownloadTaskCAll {
     public void onProgress(DownloadInfo df, TaskInfo info) {
 
         DownloadCall infoCall = findInfoCall(df);
-        if (infoCall != null) ;
-        infoCall.onProgress(df);
+        if (infoCall != null) {
+            infoCall.onProgress(df);
+            infoCall.onThreadProgress(df,info);
+        }
     }
 
 
     private DownloadCall findInfoCall(final DownloadInfo df) {
-        DownloadCall call = (DownloadCall) MapUtil.iteratorMap(infoCallMap, new MapUtil.IteratorCall<DownloadCall>() {
-            @Override
-            public MapUtil.IteratorType onIterator(Object key, DownloadCall value) {
-                if (key == df) {
-                    return MapUtil.IteratorType.ret;
+        DownloadCall call = null;
+        try {
+            call = (DownloadCall) MapUtil.iteratorMap(infoCallMap, new MapUtil.IteratorCall<DownloadInfo,DownloadCall>() {
+                @Override
+                public MapUtil.IteratorType onIterator(DownloadInfo key, DownloadCall value) {
+                    if (key == df) {
+                        return MapUtil.IteratorType.ret;
+                    }
+    
+                    return MapUtil.IteratorType.next;
                 }
-
-                return MapUtil.IteratorType.next;
-            }
-        });
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         return call;
     }
@@ -88,7 +97,7 @@ public class DownloadPartner implements DownloadTaskCAll {
     @Override
     public void onStart(DownloadInfo df, TaskInfo info) {
         DownloadCall infoCall = findInfoCall(df);
-        if (infoCall != null) ;
+        if (infoCall != null)  
         infoCall.onStart(df);
     }
 
@@ -97,11 +106,11 @@ public class DownloadPartner implements DownloadTaskCAll {
         if (df.getProgressLen() >= df.getFileLen()) {
             renameFile(df);
             df.setStatue(4);
-            Log.e(Tag, "onCompleted:" + df);
+            Log.d(Tag, "onCompleted:" + df);
             downloadHelper.downloadDbHelper.updataInfo(df);
             downloadHelper.downloadDbHelper.removeTask(info);
             DownloadCall infoCall = findInfoCall(df);
-            if (infoCall != null) ;
+            if (infoCall != null) 
             infoCall.onCompleted(df);
             clearInfo(df, info);
             return;
@@ -111,45 +120,59 @@ public class DownloadPartner implements DownloadTaskCAll {
 
     }
 
-    private void clearInfo(final DownloadInfo df, final TaskInfo info) {
+    private synchronized void  clearInfo(final DownloadInfo df, final TaskInfo info) {
         removeTask(info);
         removeTask(df);
         removeCall();
     }
 
     private void removeCall() {
-        MapUtil.iteratorMap(infoCallMap, new MapUtil.IteratorCall<DownloadCall>() {
-            @Override
-            public MapUtil.IteratorType onIterator(Object key, DownloadCall value) {
-                if (key == infoCallMap)
-                    infoCallMap.remove(key);
-                return MapUtil.IteratorType.next;
-            }
-        });
+        try {
+            MapUtil.iteratorMap(infoCallMap, new MapUtil.IteratorCall<DownloadInfo,DownloadCall>() {
+                @Override
+                public MapUtil.IteratorType onIterator(DownloadInfo key, DownloadCall value) {
+                    if (key == infoCallMap)
+                        infoCallMap.remove(key);
+                    return MapUtil.IteratorType.next;
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void removeTask(final DownloadInfo df) {
-        MapUtil.iteratorMap(downloadTaskMap, new MapUtil.IteratorCall<List<TaskInfo>>() {
-            @Override
-            public MapUtil.IteratorType onIterator(Object key, List<TaskInfo> value) {
-                if (key == df) {
-                    downloadTaskMap.remove(key);
+        try {
+            MapUtil.iteratorMap(downloadTaskMap, new MapUtil.IteratorCall<DownloadInfo,List<TaskInfo>>() {
+                @Override
+                public MapUtil.IteratorType onIterator(DownloadInfo key, List<TaskInfo> value) {
+                    if (key == df) {
+                        downloadTaskMap.remove(key);
+                    }
+                    return MapUtil.IteratorType.ret;
                 }
-                return MapUtil.IteratorType.ret;
-            }
-        });
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void removeTask(final TaskInfo info) {
-        MapUtil.iteratorMap(taskMap, new MapUtil.IteratorCall<Future>() {
-            @Override
-            public MapUtil.IteratorType onIterator(Object key, Future value) {
-                if (key == info)
-                    taskMap.remove(key);
-                return MapUtil.IteratorType.ret;
-            }
 
-        });
+        try {
+            MapUtil.iteratorMap(taskMap, new MapUtil.IteratorCall<TaskInfo,Future>() {
+                @Override
+                public MapUtil.IteratorType onIterator(TaskInfo key, Future value) {
+                    if (key == info)
+                        taskMap.remove(key);
+                    return MapUtil.IteratorType.ret;
+                }
+    
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
     }
 
     private void renameFile(DownloadInfo df) {
@@ -207,38 +230,47 @@ public class DownloadPartner implements DownloadTaskCAll {
         if (info == null)
             return;
 
-        MapUtil.iteratorMap(downloadTaskMap, new MapUtil.IteratorCall<List<TaskInfo>>() {
-            @Override
-            public MapUtil.IteratorType onIterator(Object key, List<TaskInfo> value) {
-                if (key == null)
-                    return MapUtil.IteratorType.next;
-                if (key == info || info.getUrl().equals(((DownloadInfo) key).getUrl())) {
-                    Log.e(Tag, " pause  value  " + value.toString());
-                    for (TaskInfo taskInfo : value) {
-                        taskMap.get(taskInfo).cancel(true);
-                        taskMap.remove(taskInfo);
+        try {
+            MapUtil.iteratorMap(downloadTaskMap, new MapUtil.IteratorCall<DownloadInfo,List<TaskInfo>>() {
+                @Override
+                public MapUtil.IteratorType onIterator(DownloadInfo key, List<TaskInfo> value) {
+                    if (key == null)
+                        return MapUtil.IteratorType.next;
+                    if (key == info || info.getUrl().equals(((DownloadInfo) key).getUrl())) {
+                        Log.e(Tag, " pause  value  " + value.toString());
+                        for (TaskInfo taskInfo : value) {
+                            taskMap.get(taskInfo).cancel(true);
+                            taskMap.remove(taskInfo);
+                        }
+                        Log.e(Tag, " pause  remove " + key.toString());
+                        downloadTaskMap.remove(key);
+                        return MapUtil.IteratorType.ret;
                     }
-                    Log.e(Tag, " pause  remove " + key.toString());
-                    downloadTaskMap.remove(key);
-                    return MapUtil.IteratorType.ret;
+                    return MapUtil.IteratorType.next;
                 }
-                return MapUtil.IteratorType.next;
-            }
-        });
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public boolean taskRuning(List<TaskInfo> pool) {
         boolean runing =false ;
         for (final TaskInfo info : pool) {
-            Future o = (Future) MapUtil.iteratorMap(taskMap, new MapUtil.IteratorCall<Future>() {
-                @Override
-                public MapUtil.IteratorType onIterator(Object key, Future value) {
-                    if (key == info)
-                        return MapUtil.IteratorType.ret;
-                    return MapUtil.IteratorType.next;
-                }
-
-            });
+            Future o = null;
+            try {
+                o = (Future) MapUtil.iteratorMap(taskMap, new MapUtil.IteratorCall<TaskInfo,Future>() {
+                    @Override
+                    public MapUtil.IteratorType onIterator(TaskInfo key, Future value) {
+                        if (key == info)
+                            return MapUtil.IteratorType.ret;
+                        return MapUtil.IteratorType.next;
+                    }
+    
+                });
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
             if (o==null)
                 continue;
             if (o.isDone() ||o.isCancelled()){

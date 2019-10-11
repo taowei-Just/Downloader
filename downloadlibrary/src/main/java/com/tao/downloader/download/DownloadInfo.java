@@ -1,8 +1,9 @@
-package tao.com.downloadlibrary.downLoad;
+package com.tao.downloader.download;
 
 public class DownloadInfo {
 
     int id;
+    
     String url ;
     // 下载id
     int downloadId;
@@ -18,13 +19,30 @@ public class DownloadInfo {
     long progressLen ;
     // 下载状态 0 未下载 ，1 暂停 ，2等待下载 ，3正在下载 ，4下载完成
     int statue;
+    
     String md5 ;
-
+    
     // 是否覆盖下载
     boolean cover =false ;
-
+    
     boolean matchMd5  = false;
     
+    public boolean isCover() {
+        return cover;
+    }
+
+    public void setCover(boolean cover) {
+        this.cover = cover;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
     public String getUrl() {
         return url;
     }
@@ -33,26 +51,13 @@ public class DownloadInfo {
         this.url = url;
     }
 
-    public int getStatue() {
-        return statue;
+    public int getDownloadId() {
+        return downloadId;
     }
 
-    public void setStatue(int statue) {
-        this.statue = statue;
+    public void setDownloadId(int downloadId) {
+        this.downloadId = downloadId;
     }
-
-    public String getMd5() {
-        return md5;
-    }
-
-    public void setMd5(String md5) {
-        this.md5 = md5;
-    }
-
-    public int getId() {
-        return id;
-    }
-
 
     public int getThreadCount() {
         return threadCount;
@@ -78,7 +83,6 @@ public class DownloadInfo {
         this.filePath = filePath;
     }
 
-
     public long getFileLen() {
         return fileLen;
     }
@@ -87,25 +91,33 @@ public class DownloadInfo {
         this.fileLen = fileLen;
     }
 
-    public synchronized long getProgressLen() {
+    public long getProgressLen() {
         return progressLen;
     }
 
-    public synchronized void  setProgressLen(long progressLen) {
+    public void setProgressLen(long progressLen) {
         this.progressLen = progressLen;
     }
 
-    public int getDownloadId() {
-        return downloadId;
+    public int getStatue() {
+        return statue;
     }
 
-    public void setDownloadId(int downloadId) {
-        this.downloadId = downloadId;
+    public void setStatue(int statue) {
+        this.statue = statue;
+    }
+
+    public String getMd5() {
+        return md5;
+    }
+
+    public void setMd5(String md5) {
+        this.md5 = md5;
     }
 
     @Override
     public String toString() {
-        return "DownLoadInfo{" +
+        return "DownloadInfo{" +
                 "id=" + id +
                 ", url='" + url + '\'' +
                 ", downloadId=" + downloadId +
@@ -116,7 +128,8 @@ public class DownloadInfo {
                 ", progressLen=" + progressLen +
                 ", statue=" + statue +
                 ", md5='" + md5 + '\'' +
+                ", cover=" + cover +
+                ", matchMd5=" + matchMd5 +
                 '}';
     }
-
 }

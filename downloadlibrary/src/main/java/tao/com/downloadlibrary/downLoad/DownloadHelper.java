@@ -35,7 +35,7 @@ public class DownloadHelper implements IDownload {
     }
 
     @Override
-    public void addDownload(DownloadInfo info, DownloadCall downloadCall) {
+    public  synchronized void  addDownload(DownloadInfo info, DownloadCall downloadCall) {
 //        Log.e(Tag," 添加 下载  " +  info.toString());
         DownloadInfo cache = findCache(info);
 //        Log.e(Tag,"  查找下载缓库存：" +  cache );
@@ -61,21 +61,16 @@ public class DownloadHelper implements IDownload {
         //1. 下载线程是存在 并在执行当中
         //2. 下载信息是否匹配的上
         //3.本地缓存是否存在
-        //
-        //
 //        if (pool!=null)
 //            Log.e(Tag," pool" +  pool.toString());
         if (downloadWraper.checkTask(downloadInfo, pool)) {
             // 文件正在下载 或者等待中
-
 //            Log.e(Tag," 下载中" +  downloadInfo.toString());
             return;
         }
         if (pool==null)
          pool = findLocalPool(info);
-
         createinfo(downloadInfo, pool, downloadCall);
-
     }
 
     private List<TaskInfo> findLocalPool(DownloadInfo info) {
@@ -152,9 +147,7 @@ public class DownloadHelper implements IDownload {
     }
 
     public static class Buder {
-
         String dbPath ;
-
         public Context context;
         // 最大同时下载线程
         int maxDownloadThread = 10;
@@ -162,7 +155,6 @@ public class DownloadHelper implements IDownload {
         int maxDownloadFileCount = 10;
         String downloadFolder  = Environment.getExternalStorageDirectory()+"/download/";
         int maxThreadCount=5;
-
 
 
         public Buder setDbPath(String dbPath) {
