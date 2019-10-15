@@ -1,6 +1,7 @@
-package tao.com.downloadlibrary.downLoad;
+package tao.com.downloadlibrary.tool;
 
 
+import android.content.Context;
 import android.database.Cursor;
 import android.text.TextUtils;
 
@@ -8,7 +9,6 @@ import java.io.File;
 import java.util.List;
 
 import it_tao.ormlib.DB;
-import tao.com.downloadlibrary.TaskInfo;
 
 /**
  * 存储下载信息
@@ -16,24 +16,23 @@ import tao.com.downloadlibrary.TaskInfo;
 
 public class DownloadDbHelper {
 
-    private final DB completeDB;
-    private final DB taskDB;
-    private final DB downloadDB;
+    private DB completeDB;
+    private DB taskDB;
+    private DB downloadDB;
 
-    public DownloadDbHelper(DownloadHelper downloadHelper) {
-
-        File file = new File(TextUtils.isEmpty(downloadHelper.buder.dbPath) ? downloadHelper.buder.context.getDatabasePath("db").getAbsolutePath() : downloadHelper.buder.dbPath);
+    public DownloadDbHelper(Context context, String dbPath) {
+        if (context == null || TextUtils.isEmpty(dbPath))
+            return;
+        File file = new File(dbPath);
         if (!file.exists())
             file.mkdirs();
-
-        downloadDB = new DB(downloadHelper.buder.context, file.getAbsolutePath(), "download.db", "download");
-        taskDB = new DB(downloadHelper.buder.context, file.getAbsolutePath(), "download.db", "task");
-        completeDB = new DB(downloadHelper.buder.context, file.getAbsolutePath(), "download.db", "complete");
-
+        downloadDB = new DB(context, dbPath, "download.db", "download");
+        taskDB = new DB(context, dbPath, "download.db", "task");
+        completeDB = new DB(context, dbPath, "download.db", "complete");
     }
 
-    public DownloadInfo findCacheDownload(DownloadInfo info) {
-        List<DownloadInfo> downloadInfos = completeDB.findAllByWhere(DownloadInfo.class, "url='" + info.getUrl() + "'");
+    public DownloadInfo findCacheDownload(String url) {
+        List<DownloadInfo> downloadInfos = completeDB.findAllByWhere(DownloadInfo.class, "url='" + url + "'");
         for (DownloadInfo downloadInfo : downloadInfos) {
             if (downloadInfo == null)
                 continue;
@@ -48,16 +47,7 @@ public class DownloadDbHelper {
         for (DownloadInfo downloadInfo : downloadInfos) {
             if (downloadInfo == null)
                 continue;
-            info.setDownloadId(downloadInfo.getDownloadId());
-            info.setMd5(downloadInfo.getMd5());
-            info.setStatue(downloadInfo.getStatue());
-            info.setFileLen(downloadInfo.getFileLen());
-            info.setProgressLen(downloadInfo.getProgressLen());
-            info.setDownloadId(downloadInfo.getDownloadId());
-            info.setThreadCount(downloadInfo.getThreadCount());
-            info.setFilePath(TextUtils.isEmpty(info.getFilePath()) ? downloadInfo.getFilePath() : info.getFilePath());
-            info.setFileName(TextUtils.isEmpty(info.getFileName()) ? downloadInfo.getFileName() : info.getFileName());
-            return info;
+            return downloadInfo;
         }
         return info;
     }
@@ -73,7 +63,7 @@ public class DownloadDbHelper {
     }
 
     public void updataTaskInfo(TaskInfo info) {
-        List<TaskInfo> taskInfos = taskDB.findAllByWhere(TaskInfo.class, "downloadId='" + info.getDownloadId() + "' and inde='" + info.getInde() + "'");
+        List<TaskInfo> taskInfos = taskDB.findAllByWhere(TaskInfo.class, "downloadId='" + info.getDownloadId() + "' and taskId='" + info.getTaskId() + "'");
         if (taskInfos.size() > 0)
             updataTask(info);
         else
@@ -91,16 +81,16 @@ public class DownloadDbHelper {
     }
 
     protected void updataTask(TaskInfo info) {
-        taskDB.update(info, "downloadId='" + info.getDownloadId() + "' and inde='" + info.getInde() + "'");
+        taskDB.update(info, "downloadId='" + info.getDownloadId() + "' and taskId='" + info.getTaskId() + "'");
     }
 
-
     public int getDownloadId() {
-        Cursor cursor = downloadDB.getDb().rawQuery(" select max(id) from download", new String[]{});
+        downloadDB.checkTableExist(DownloadInfo.class);
+        Cursor cursor = downloadDB.getDb().rawQuery(" select max(downloadId) from download", new String[]{});
         int columnCount = cursor.getColumnCount();
         if (columnCount > 0)
             while (cursor.moveToNext()) {
-                return cursor.getInt(cursor.getColumnIndex("id") + 1);
+                return cursor.getInt(cursor.getColumnIndex("downloadId") + 1);
             }
         cursor.close();
         return columnCount;
@@ -111,7 +101,11 @@ public class DownloadDbHelper {
     }
 
     public void removeTask(TaskInfo info) {
-        taskDB.deleteByWhere(info.getClass(), "downloadId='" + info.getDownloadId() + "' and inde='" + info.getInde() + "'");
+        taskDB.deleteByWhere(info.getClass(), "downloadId='" + info.getDownloadId() + "' and taskId='" + info.getTaskId() + "'");
+    }
+
+    public void cleanTask(int downloadId) {
+        taskDB.deleteByWhere(TaskInfo.class, "downloadId='" + downloadId + "'");
     }
 
     public DownloadInfo findLoaclDownload(String url) {

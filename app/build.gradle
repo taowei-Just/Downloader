@@ -1,29 +1,154 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 29
-    buildToolsVersion "29.0.0"
+    compileSdkVersion 26
     defaultConfig {
+
         applicationId "com.tao.downloader"
         minSdkVersion 19
-        targetSdkVersion 29
-        versionCode 1
-        versionName "1.0"
+        targetSdkVersion 26
+        versionCode = Integer.parseInt(getProperty("version.properties", "versionCode", false))
+        versionName = getVName()
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
+    
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+
+        android.applicationVariants.all {
+            variant ->
+                variant.outputs.all {
+                    output ->
+
+                        def appName = "appName"
+                        //拿到输出文件
+                        def outputFile = output.outputFile
+                        //这里也可以调用上面的 (':app:assembleRelease' in runTasks) 进行判断 感觉会更好一些
+                        if (outputFile.name.contains("release")) {
+                            //在字符串里面调用方法的话，得要${ }里面调用 切记
+                            System.err.println("release ")
+                            outputFileName = new File("../release/", appName + "_release-${getVName()}-${getProperty("version.properties", "versionCode", false)}_DATE-${buildTime()}.apk");
+                            //调用方法 增加versionCode 值
+                            if (('assembleRelease' in runTasks) ) {
+                                PropertyAdd("version.properties", "versionCode")
+                            }
+
+                        } else if (outputFile.name.contains("debug")) {
+                            System.err.println("debug ")
+                            outputFileName = new File("../debug/", appName + "_debug-${getVName()}-${getProperty("version.properties", "versionCode", false)}_DATE-${buildTime()}.apk")
+                        }
+                }
+        }
+        PropertyAdd("version.properties", "versionName")
+    }
+    repositories {
+        flatDir {
+            dirs 'libs'
+            flatDir { dirs 'libs', '../downloadlibrary/libs' }
+        }
+    }
+    configurations.all {
+        resolutionStrategy.force 'com.android.support:support-annotations:26.1.0'
     }
 }
 
 dependencies {
+
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'androidx.appcompat:appcompat:1.1.0'
-    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
+//    implementation 'com.android.support:support-annotations'
+    implementation 'com.android.support:appcompat-v7:26.1.0'
+    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
     testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'androidx.test:runner:1.2.0'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+
+    // butterknife
+    implementation 'com.jakewharton:butterknife:8.4.0'
+    annotationProcessor 'com.jakewharton:butterknife-compiler:8.4.0'
+
+    api 'com.google.code.gson:gson:2.2.4'
+    implementation project(path: ':downloadlibrary')
 }
+
+
+def getVName() {
+    def versionName = getProperty("version.properties", "versionName", false)
+    System.err.println("versionname  " + versionName)
+    def array = versionName.toString().toCharArray();
+    def sb = new StringBuilder();
+
+    for (int i = 0; i < array.length; i++) {
+        sb.append(array[i])
+        if (i!=array.length-1)
+            sb.append(".")
+    }
+    
+    return sb.toString()
+}
+
+/**
+ * @param filename 要打开的文件名字
+ * @param propName 文件里面的键名字
+ * @param isRootProject 是否用rootProject 文件打开，true 的话，在编译时候可以得到值，打包时候无法得到值。false的话在打包时候可以得到值,编译时候 无法得到值
+ * @return 所选择的文件里面的propName对应的值
+ */
+def getProperty(String filename, String propName, boolean isRootProject) {
+    //在这里 必须是在rootProject.file  如果 file的话 ，编译时候会出错
+    def propsFile
+    if (isRootProject) {
+        propsFile = rootProject.file(filename)
+    } else {
+        propsFile = file(filename)
+    }
+    if (propsFile.exists()) {
+
+        def props = new Properties()
+        props.load(new FileInputStream(propsFile))
+        if (props[propName] != null) {
+            //下面这个输出在android studio3.1里面 在Build窗口 右边一个锤子下面 toggle哪里，就是原来的message哪里
+            print("versionCode " + props[propName])
+            return props[propName]
+        } else {
+            print("No such property " + propName + " in file " + filename);
+        }
+    } else {
+        print(filename + " does not exist!")
+    }
+}
+
+//version.properties  里面的vesioncode自增
+def PropertyAdd(String filename, String propName) {
+    System.err.println("PropertyAdd " + filename + " propName " + propName)
+    //这里必须用file  如果用rootProject的话 则找不到file为null
+    def propsFile = file(filename)
+    //只有在打正式版的情况下才继续运行，否则退出方法，这样是为了防止 编译时候versionCode 也自增 if里面的参数可以在Build窗口里面 message 最上边[]里面就是
+    def runTasks = gradle.startParameter.taskNames
+
+    if (propsFile.exists()) {
+        def props = new Properties()
+        props.load(new FileInputStream(propsFile))
+        //这里要注意 props[propName] 是String 类型
+        if (props[propName] != null) {
+            def code = (props[propName]).toInteger() //转成Integer
+            props[propName] = (++code).toString()  //自增 且转成String
+        } else {
+            print("No such property " + propName + " in file " + filename);
+        }
+        //在这里提交 对version.properties的更改
+        props.store(propsFile.newWriter(), null)
+    } else {
+        print(filename + " does not exist!")
+    }
+}
+
+//用于生成时间
+def buildTime() {
+    def date = new Date()
+    //yy年 MM月 dd日 HH小时 mm分钟 ss秒
+    def formattedDate = date.format('yyMMdd_HHmm')
+    return formattedDate
+}
+ 

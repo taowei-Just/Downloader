@@ -1,4 +1,4 @@
-package tao.com.downloadlibrary;
+package tao.com.downloadlibrary.tool;
 
 public class TaskInfo {
     int id;
@@ -21,11 +21,20 @@ public class TaskInfo {
     // 缓存文件地址
     String cacheFile;
     // 偏移
-    private long offeset = -1;
+    private long offeset = 0;
     long currentLen;
     int statue;   // 状态 0 未启动 ， 1.准备中 ，2.下载中 ，3 异常 ，4 完成 
 
- 
+    public TaskInfo() {
+    }
+
+    public TaskInfo(int downloadId, int taskId, String url, String fileName) {
+        this.downloadId = downloadId;
+        this.fileName = fileName;
+        this.taskId = taskId;
+        this.url = url;
+        this.cacheFile = fileName+".cache";
+    }
 
     public int getStatue() {
         return statue;
