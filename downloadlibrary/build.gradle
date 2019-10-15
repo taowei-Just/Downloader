@@ -4,34 +4,35 @@ android {
     compileSdkVersion 26
 
     defaultConfig {
+        
         minSdkVersion 19
         targetSdkVersion 26
         versionCode 1
         versionName "1.7"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        
     }
-
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
 
-        def projectname = "downloadlib"
-        libraryVariants.all { variant ->
-            variant.outputs.all {
-
-                if (variant.buildType.name.equals('release')) {
-                    def fileName =   new File("../release/",  projectname+"-"+defaultConfig.versionName+".aar")
-                    outputFileName = fileName
-
-                } else if (variant.buildType.name.equals('debug')) {
-                    def fileName =  new File("../debug/", projectname+"-debug.aar")
-                    outputFileName = fileName
-
-                }
-            }
-        }
+//        def projectname = "downloadlib"
+//        libraryVariants.all { variant ->
+//            variant.outputs.all {
+//
+//                if (variant.buildType.name.equals('release')) {
+//                    def fileName =   new File("../release/",  projectname+"-"+defaultConfig.versionName+".aar")
+//                    outputFileName = fileName
+//
+//                } else if (variant.buildType.name.equals('debug')) {
+//                    def fileName =  new File("../debug/", projectname+"-debug.aar")
+//                    outputFileName = fileName
+//
+//                }
+//            }
+//        }
     }
     repositories {
         flatDir {
